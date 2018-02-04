@@ -95,6 +95,29 @@ namespace VRTK
         }
 
         /// <summary>
+        /// SDK Controller types.
+        /// </summary>
+        /// <param name="Undefined">No controller type.</param>
+        /// <param name="Custom">A custom controller type.</param>
+        /// <param name="Simulator_Hand">The Simulator default hand controller.</param>
+        /// <param name="SteamVR_ViveWand">The HTC Vive wand controller for SteamVR.</param>
+        /// <param name="SteamVR_OculusTouch">The Oculus Touch controller for SteamVR.</param>
+        /// <param name="Oculus_OculusTouch">The Oculus Touch controller for Oculus Utilities.</param>
+        /// <param name="Daydream_Controller">The Daydream controller for Google Daydream SDK.</param>
+        /// <param name="Ximmerse_Flip">The Flip controller for Ximmerse SDK.</param>
+        public enum ControllerType
+        {
+            Undefined,
+            Custom,
+            Simulator_Hand,
+            SteamVR_ViveWand,
+            SteamVR_OculusTouch,
+            Oculus_OculusTouch,
+            Daydream_Controller,
+            Ximmerse_Flip
+        }
+
+        /// <summary>
         /// The ProcessUpdate method enables an SDK to run logic for every Unity Update
         /// </summary>
         /// <param name="controllerReference">The reference for the controller.</param>
@@ -107,6 +130,12 @@ namespace VRTK
         /// <param name="controllerReference">The reference for the controller.</param>
         /// <param name="options">A dictionary of generic options that can be used to within the fixed update.</param>
         public abstract void ProcessFixedUpdate(VRTK_ControllerReference controllerReference, Dictionary<string, object> options);
+
+        /// <summary>
+        /// The GetCurrentControllerType method returns the current used ControllerType based on the SDK and headset being used.
+        /// </summary>
+        /// <returns>The ControllerType based on the SDK and headset being used.</returns>
+        public abstract ControllerType GetCurrentControllerType();
 
         /// <summary>
         /// The GetControllerDefaultColliderPath returns the path to the prefab that contains the collider objects for the default controller of this SDK.
@@ -248,11 +277,18 @@ namespace VRTK
         public abstract void SetControllerRenderModelWheel(GameObject renderModel, bool state);
 
         /// <summary>
-        /// The HapticPulse method is used to initiate a simple haptic pulse on the tracked object of the given index.
+        /// The HapticPulse/2 method is used to initiate a simple haptic pulse on the tracked object of the given controller reference.
         /// </summary>
         /// <param name="controllerReference">The reference to the tracked object to initiate the haptic pulse on.</param>
         /// <param name="strength">The intensity of the rumble of the controller motor. `0` to `1`.</param>
         public abstract void HapticPulse(VRTK_ControllerReference controllerReference, float strength = 0.5f);
+
+        /// <summary>
+        /// The HapticPulse/2 method is used to initiate a haptic pulse based on an audio clip on the tracked object of the given controller reference.
+        /// </summary>
+        /// <param name="controllerReference">The reference to the tracked object to initiate the haptic pulse on.</param>
+        /// <param name="clip">The audio clip to use for the haptic pattern.</param>
+        public abstract bool HapticPulse(VRTK_ControllerReference controllerReference, AudioClip clip);
 
         /// <summary>
         /// The GetHapticModifiers method is used to return modifiers for the duration and interval if the SDK handles it slightly differently.
@@ -343,7 +379,7 @@ namespace VRTK
             VRTK_SDKManager sdkManager = VRTK_SDKManager.instance;
             if (sdkManager != null && controller != null)
             {
-                return (actual ? controller.Equals(sdkManager.loadedSetup.actualLeftController) : controller.Equals(sdkManager.scriptAliasLeftController));
+                return (actual ? controller == sdkManager.loadedSetup.actualLeftController : controller == sdkManager.scriptAliasLeftController);
             }
             return false;
         }
@@ -353,7 +389,7 @@ namespace VRTK
             VRTK_SDKManager sdkManager = VRTK_SDKManager.instance;
             if (sdkManager != null && controller != null)
             {
-                return (actual ? controller.Equals(sdkManager.loadedSetup.actualRightController) : controller.Equals(sdkManager.scriptAliasRightController));
+                return (actual ? controller == sdkManager.loadedSetup.actualRightController : controller == sdkManager.scriptAliasRightController);
             }
             return false;
         }
@@ -402,5 +438,7 @@ namespace VRTK
     {
         public float durationModifier = 1f;
         public float intervalModifier = 1f;
+        public ushort maxHapticVibration = 1;
+        public int hapticsBufferSize = 8192;
     }
 }

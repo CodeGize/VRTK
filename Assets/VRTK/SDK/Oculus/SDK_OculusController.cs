@@ -10,6 +10,7 @@ namespace VRTK
     /// The Oculus Controller SDK script provides a bridge to SDK methods that deal with the input devices.
     /// </summary>
     [SDK_Description(typeof(SDK_OculusSystem))]
+    [SDK_Description(typeof(SDK_OculusSystem), 1)]
     public class SDK_OculusController
 #if VRTK_DEFINE_SDK_OCULUS
         : SDK_BaseController
@@ -38,8 +39,26 @@ namespace VRTK
         protected float[] hairTriggerLimit = new float[2];
         protected float[] hairGripLimit = new float[2];
 
-        protected OVRHapticsClip hapticsProceduralClipLeft = new OVRHapticsClip();
-        protected OVRHapticsClip hapticsProceduralClipRight = new OVRHapticsClip();
+        protected OVRHapticsClip hapticsProceduralClipLeft;
+        protected OVRHapticsClip hapticsProceduralClipRight;
+
+        /// <summary>
+        /// This method is called just after loading the <see cref="VRTK_SDKSetup"/> that's using this SDK.
+        /// </summary>
+        /// <param name="setup">The SDK Setup which is using this SDK.</param>
+        public override void OnAfterSetupLoad(VRTK_SDKSetup setup)
+        {
+            base.OnAfterSetupLoad(setup);
+
+            if (hapticsProceduralClipLeft != null || hapticsProceduralClipRight != null)
+            {
+                return;
+            }
+
+            OVRHaptics.Config.Load();
+            hapticsProceduralClipLeft = new OVRHapticsClip();
+            hapticsProceduralClipRight = new OVRHapticsClip();
+        }
 
         /// <summary>
         /// The ProcessUpdate method enables an SDK to run logic for every Unity Update
@@ -63,6 +82,15 @@ namespace VRTK
 #if VRTK_DEFINE_OCULUS_UTILITIES_1_12_0_OR_NEWER
             CalculateAngularVelocity(controllerReference);
 #endif
+        }
+
+        /// <summary>
+        /// The GetCurrentControllerType method returns the current used ControllerType based on the SDK and headset being used.
+        /// </summary>
+        /// <returns>The ControllerType based on the SDK and headset being used.</returns>
+        public override ControllerType GetCurrentControllerType()
+        {
+            return ControllerType.Oculus_OculusTouch;
         }
 
         /// <summary>
@@ -324,7 +352,7 @@ namespace VRTK
         }
 
         /// <summary>
-        /// The HapticPulse method is used to initiate a simple haptic pulse on the tracked object of the given index.
+        /// The HapticPulse/2 method is used to initiate a simple haptic pulse on the tracked object of the given controller reference.
         /// </summary>
         /// <param name="controllerReference">The reference to the tracked object to initiate the haptic pulse on.</param>
         /// <param name="strength">The intensity of the rumble of the controller motor. `0` to `1`.</param>
@@ -348,6 +376,30 @@ namespace VRTK
                     OVRHaptics.RightChannel.Preempt(hapticsProceduralClipRight);
                 }
             }
+        }
+
+        /// <summary>
+        /// The HapticPulse/2 method is used to initiate a haptic pulse based on an audio clip on the tracked object of the given controller reference.
+        /// </summary>
+        /// <param name="controllerReference">The reference to the tracked object to initiate the haptic pulse on.</param>
+        /// <param name="clip">The audio clip to use for the haptic pattern.</param>
+        public override bool HapticPulse(VRTK_ControllerReference controllerReference, AudioClip clip)
+        {
+            if (VRTK_ControllerReference.IsValid(controllerReference))
+            {
+                uint index = VRTK_ControllerReference.GetRealIndex(controllerReference);
+                GameObject controller = GetControllerByIndex(index);
+
+                if (IsControllerLeftHand(controller))
+                {
+                    OVRHaptics.LeftChannel.Preempt(new OVRHapticsClip(clip));
+                }
+                else if (IsControllerRightHand(controller))
+                {
+                    OVRHaptics.RightChannel.Preempt(new OVRHapticsClip(clip));
+                }
+            }
+            return true;
         }
 
         /// <summary>

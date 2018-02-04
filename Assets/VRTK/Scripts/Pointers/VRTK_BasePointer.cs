@@ -400,7 +400,7 @@ namespace VRTK
         {
             if (playAreaCursor)
             {
-                playAreaCursor.SetMaterialColor(color);
+                playAreaCursor.SetMaterialColor(color, true);
             }
         }
 
@@ -426,7 +426,7 @@ namespace VRTK
             {
                 validNavMeshLocation = true;
             }
-            return (validNavMeshLocation && target && !(VRTK_PolicyList.Check(target.gameObject, invalidListPolicy)));
+            return (validNavMeshLocation && target && !(VRTK_PolicyList.Check(target.gameObject, targetListPolicy)));
         }
 
         protected virtual void CreateObjectInteractor()

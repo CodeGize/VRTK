@@ -3,10 +3,12 @@ namespace VRTK
 {
 #if VRTK_DEFINE_SDK_STEAMVR
     using UnityEngine;
-    using System;
     using System.Collections.Generic;
-    using System.Reflection;
     using Valve.VR;
+#if !VRTK_DEFINE_STEAMVR_PLUGIN_1_2_2_OR_NEWER
+    using System;
+    using System.Reflection;
+#endif
 #endif
 
     /// <summary>
@@ -27,6 +29,7 @@ namespace VRTK
         protected Dictionary<uint, SteamVR_TrackedObject> cachedTrackedObjectsByIndex = new Dictionary<uint, SteamVR_TrackedObject>();
         protected ushort maxHapticVibration = 3999;
 
+#if !VRTK_DEFINE_STEAMVR_PLUGIN_1_2_2_OR_NEWER
         /// <summary>
         /// This method is called just after unloading the <see cref="VRTK_SDKSetup"/> that's using this SDK.
         /// </summary>
@@ -49,6 +52,7 @@ namespace VRTK
             Array.Clear(connected, 0, connected.Length);
             connectedField.SetValue(controllerManager, connected);
         }
+#endif
 
         /// <summary>
         /// The ProcessUpdate method enables an SDK to run logic for every Unity Update
@@ -66,6 +70,22 @@ namespace VRTK
         /// <param name="options">A dictionary of generic options that can be used to within the fixed update.</param>
         public override void ProcessFixedUpdate(VRTK_ControllerReference controllerReference, Dictionary<string, object> options)
         {
+        }
+
+        /// <summary>
+        /// The GetCurrentControllerType method returns the current used ControllerType based on the SDK and headset being used.
+        /// </summary>
+        /// <returns>The ControllerType based on the SDK and headset being used.</returns>
+        public override ControllerType GetCurrentControllerType()
+        {
+            switch (VRTK_DeviceFinder.GetHeadsetType(true))
+            {
+                case VRTK_DeviceFinder.Headsets.Vive:
+                    return ControllerType.SteamVR_ViveWand;
+                case VRTK_DeviceFinder.Headsets.OculusRift:
+                    return ControllerType.SteamVR_OculusTouch;
+            }
+            return ControllerType.Custom;
         }
 
         /// <summary>
@@ -313,7 +333,8 @@ namespace VRTK
 
                 if (controller != null)
                 {
-                    model = controller.transform.Find("Model").gameObject;
+                    Transform foundModel = controller.transform.Find("Model");
+                    model = (foundModel != null ? foundModel.gameObject : null);
                 }
             }
             return model;
@@ -345,7 +366,7 @@ namespace VRTK
         }
 
         /// <summary>
-        /// The HapticPulse method is used to initiate a simple haptic pulse on the tracked object of the given index.
+        /// The HapticPulse/2 method is used to initiate a simple haptic pulse on the tracked object of the given controller reference.
         /// </summary>
         /// <param name="controllerReference">The reference to the tracked object to initiate the haptic pulse on.</param>
         /// <param name="strength">The intensity of the rumble of the controller motor. `0` to `1`.</param>
@@ -361,12 +382,25 @@ namespace VRTK
         }
 
         /// <summary>
+        /// The HapticPulse/2 method is used to initiate a haptic pulse based on an audio clip on the tracked object of the given controller reference.
+        /// </summary>
+        /// <param name="controllerReference">The reference to the tracked object to initiate the haptic pulse on.</param>
+        /// <param name="clip">The audio clip to use for the haptic pattern.</param>
+        public override bool HapticPulse(VRTK_ControllerReference controllerReference, AudioClip clip)
+        {
+            //SteamVR doesn't support audio haptics so return false to do a fallback.
+            return false;
+        }
+
+        /// <summary>
         /// The GetHapticModifiers method is used to return modifiers for the duration and interval if the SDK handles it slightly differently.
         /// </summary>
         /// <returns>An SDK_ControllerHapticModifiers object with a given `durationModifier` and an `intervalModifier`.</returns>
         public override SDK_ControllerHapticModifiers GetHapticModifiers()
         {
-            return new SDK_ControllerHapticModifiers();
+            SDK_ControllerHapticModifiers modifiers = new SDK_ControllerHapticModifiers();
+            modifiers.maxHapticVibration = maxHapticVibration;
+            return modifiers;
         }
 
         /// <summary>
@@ -434,6 +468,8 @@ namespace VRTK
                     return device.GetAxis();
                 case ButtonTypes.Trigger:
                     return device.GetAxis(EVRButtonId.k_EButton_SteamVR_Trigger);
+                case ButtonTypes.Grip:
+                    return device.GetAxis(EVRButtonId.k_EButton_Axis2);
             }
             return Vector2.zero;
         }

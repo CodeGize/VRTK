@@ -22,6 +22,11 @@
             GetControllerSDK().ProcessFixedUpdate(controllerReference, options);
         }
 
+        public static SDK_BaseController.ControllerType GetCurrentControllerType()
+        {
+            return GetControllerSDK().GetCurrentControllerType();
+        }
+
         public static string GetControllerDefaultColliderPath(SDK_BaseController.ControllerHand hand)
         {
             return GetControllerSDK().GetControllerDefaultColliderPath(hand);
@@ -140,6 +145,11 @@
         public static void HapticPulse(VRTK_ControllerReference controllerReference, float strength = 0.5f)
         {
             GetControllerSDK().HapticPulse(controllerReference, strength);
+        }
+
+        public static bool HapticPulse(VRTK_ControllerReference controllerReference, AudioClip clip)
+        {
+            return GetControllerSDK().HapticPulse(controllerReference, clip);
         }
 
         public static SDK_ControllerHapticModifiers GetHapticModifiers()

@@ -278,6 +278,10 @@ namespace VRTK
 #endif
             VRTK_SDK_Bridge.InvalidateCaches();
 
+#if UNITY_EDITOR
+            Undo.RecordObject(this, "Populate Object References");
+#endif
+
             actualBoundaries = null;
             actualHeadset = null;
             actualLeftController = null;
@@ -391,6 +395,16 @@ namespace VRTK
             }
         }
 
+        private void OnEnable()
+        {
+#pragma warning disable 618
+            if (!VRTK_SDKManager.instance.persistOnLoad)
+#pragma warning restore 618
+            {
+                PopulateObjectReferences(false);
+            }
+        }
+
 #if UNITY_EDITOR
         static VRTK_SDKSetup()
         {
@@ -476,7 +490,7 @@ namespace VRTK
 
         private void SetupHeadset()
         {
-            if (!actualHeadset.GetComponent<VRTK_TrackedHeadset>())
+            if (actualHeadset != null && !actualHeadset.GetComponent<VRTK_TrackedHeadset>())
             {
                 actualHeadset.AddComponent<VRTK_TrackedHeadset>();
             }

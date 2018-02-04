@@ -16,19 +16,7 @@
 
         static VRTK_SDKManagerEditor()
         {
-            //get valid BuildTargetGroups
-            BuildTargetGroup[] targetGroups = Enum.GetValues(typeof(BuildTargetGroup)).Cast<BuildTargetGroup>().Where(group =>
-            {
-                if (group == BuildTargetGroup.Unknown)
-                {
-                    return false;
-                }
-
-                string targetGroupName = Enum.GetName(typeof(BuildTargetGroup), group);
-                FieldInfo targetGroupFieldInfo = typeof(BuildTargetGroup).GetField(targetGroupName, BindingFlags.Public | BindingFlags.Static);
-
-                return targetGroupFieldInfo != null && targetGroupFieldInfo.GetCustomAttributes(typeof(ObsoleteAttribute), false).Length == 0;
-            }).ToArray();
+            BuildTargetGroup[] targetGroups = VRTK_SharedMethods.GetValidBuildTargetGroups();
             isBuildTargetActiveSymbolsFoldOut = new Dictionary<BuildTargetGroup, bool>(targetGroups.Length);
 
             foreach (BuildTargetGroup targetGroup in targetGroups)
@@ -61,8 +49,8 @@
                         GUI.color = new Color(previousColor.r, previousColor.g, previousColor.b, 0.5f);
                     }
 
-                    GUIContent unloadButtonGUIContent = new GUIContent("Unload", "TODO: Tooltip");
-                    GUIContent loadButtonGUIContent = new GUIContent("Load", "TODO: Tooltip");
+                    GUIContent unloadButtonGUIContent = new GUIContent("Unload", "Unload this SDK Setup.");
+                    GUIContent loadButtonGUIContent = new GUIContent("Load", "Try to load this SDK Setup.");
                     float buttonGUIContentWidth = Mathf.Max(
                         GUI.skin.button.CalcSize(unloadButtonGUIContent).x,
                         GUI.skin.button.CalcSize(loadButtonGUIContent).x
@@ -303,19 +291,7 @@
 
                     if (GUILayout.Button(clearSymbolsGUIContent, style))
                     {
-                        //get valid BuildTargetGroups
-                        BuildTargetGroup[] targetGroups = Enum.GetValues(typeof(BuildTargetGroup)).Cast<BuildTargetGroup>().Where(group =>
-                        {
-                            if (group == BuildTargetGroup.Unknown)
-                            {
-                                return false;
-                            }
-
-                            string targetGroupName = Enum.GetName(typeof(BuildTargetGroup), group);
-                            FieldInfo targetGroupFieldInfo = typeof(BuildTargetGroup).GetField(targetGroupName, BindingFlags.Public | BindingFlags.Static);
-
-                            return targetGroupFieldInfo != null && targetGroupFieldInfo.GetCustomAttributes(typeof(ObsoleteAttribute), false).Length == 0;
-                        }).ToArray();
+                        BuildTargetGroup[] targetGroups = VRTK_SharedMethods.GetValidBuildTargetGroups();
 
                         foreach (BuildTargetGroup targetGroup in targetGroups)
                         {
